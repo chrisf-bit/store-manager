@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import pino from 'pino';
 import { router } from './routes';
 
@@ -38,12 +39,21 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Routes
-app.use(router);
+// API routes — mounted under /api so the client can reach them via /api/*
+app.use('/api', router);
 
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Serve client static files in production
+const clientDist = path.join(__dirname, '../../client/dist');
+app.use(express.static(clientDist));
+
+// SPA catch-all — serve index.html for all non-API routes
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(clientDist, 'index.html'));
 });
 
 app.listen(port, () => {
