@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SimulationRun {
+  id           String   @id @default(uuid()) @db.Uuid
+  createdAt    DateTime @default(now())
+  storeName    String   @default("FreshWay Markets – Riverside")
+  storeSize    String   @default("medium")
+  region       String   @default("Midlands")
+  currentRound Int      @default(0)
+  status       String   @default("in_progress")
+  runSeed      Int
+
+  roundStates        RoundState[]
+  decisionSelections DecisionSelection[]
+  eventInstances     EventInstance[]
+}
+
+model RoundState {
+  id            String @id @default(uuid()) @db.Uuid
+  roundNumber   Int
+  metricsJson   Json
+  narrativeText String @db.Text
+
+  run   SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId String        @db.Uuid
+
+  @@unique([runId, roundNumber])
+}
+
+model DecisionTemplate {
+  id          String @id @default(uuid()) @db.Uuid
+  category    String
+  title       String
+  optionsJson Json
+
+  selections DecisionSelection[]
+}
+
+model DecisionSelection {
+  id        String @id @default(uuid()) @db.Uuid
+  roundNumber Int
+  optionKey   String
+
+  run                SimulationRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId              String           @db.Uuid
+  decisionTemplate   DecisionTemplate @relation(fields: [decisionTemplateId], references: [id])
+  decisionTemplateId String           @db.Uuid
+
+  @@unique([runId, roundNumber, decisionTemplateId])
+}
+
+model EventTemplate {
+  id          String @id @default(uuid()) @db.Uuid
+  category    String
+  title       String
+  description String @db.Text
+  weightBase  Float  @default(1.0)
+  effectsJson Json
+
+  instances EventInstance[]
+}
+
+model EventInstance {
+  id                 String @id @default(uuid()) @db.Uuid
+  roundNumber        Int
+  resolvedEffectsJson Json
+
+  run             SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId           String        @db.Uuid
+  eventTemplate   EventTemplate @relation(fields: [eventTemplateId], references: [id])
+  eventTemplateId String        @db.Uuid
+
+  @@unique([runId, roundNumber])
+}
