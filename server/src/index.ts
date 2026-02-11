@@ -26,23 +26,8 @@ app.use((req, _res, next) => {
   next();
 });
 
-// CORS — only needed for API routes (static files are same-origin)
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
-  .split(',')
-  .map((s) => s.trim());
-
-const corsMiddleware = cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-});
-
-// API routes — mounted under /api with CORS
-app.use('/api', corsMiddleware, express.json(), router);
+// API routes with CORS (permissive — frontend and API share the same origin in production)
+app.use('/api', cors(), express.json(), router);
 
 // Health check + debug info
 app.get('/health', (_req, res) => {
