@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import type { AllocationTemplate } from 'shared';
+import { Wallet, Clock } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 
 interface AllocationPanelProps {
   templates: AllocationTemplate[];
@@ -9,9 +11,9 @@ interface AllocationPanelProps {
   onAllComplete?: () => void;
 }
 
-const CATEGORY_META: Record<string, { icon: string }> = {
-  budget: { icon: '💰' },
-  time: { icon: '🕐' },
+const CATEGORY_META: Record<string, { Icon: ComponentType<LucideProps> }> = {
+  budget: { Icon: Wallet },
+  time: { Icon: Clock },
 };
 
 export default function AllocationPanel({
@@ -126,7 +128,7 @@ export default function AllocationPanel({
       {/* Current allocation card */}
       <div key={template.id} className="animate-fadeIn">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl">{meta?.icon}</span>
+          {meta && <meta.Icon size={20} className="text-text-secondary flex-shrink-0" />}
           <div>
             <h3 className="text-base font-bold">{template.title}</h3>
             <p className="text-xs text-text-muted">{template.description}</p>

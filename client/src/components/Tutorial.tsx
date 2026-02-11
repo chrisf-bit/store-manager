@@ -1,9 +1,11 @@
-import { type RefObject } from 'react';
+import { type RefObject, type ComponentType } from 'react';
+import { Compass, Store, LayoutList, Target, Send } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 
 /* ========== Tutorial Step Definitions ========== */
 export interface TutorialStep {
   id: string;
-  icon: string;
+  icon: ComponentType<LucideProps>;
   title: string;
   description: string;
 }
@@ -11,35 +13,35 @@ export interface TutorialStep {
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'guide',
-    icon: '🧭',
+    icon: Compass,
     title: 'Guide Panel',
     description:
       'Your companion throughout the simulation. It walks you through Plan, Execute, and Reflect phases each round, with contextual tips and key formulas. On mobile, tap the menu button to open it.',
   },
   {
     id: 'header',
-    icon: '🏪',
+    icon: Store,
     title: 'Store Header & Progress',
     description:
       'Shows your store name, size, and region. The round dots track your progress through all 4 weeks \u2014 completed rounds show a tick mark.',
   },
   {
     id: 'tabs',
-    icon: '📋',
+    icon: LayoutList,
     title: 'Navigation Tabs',
     description:
       'Switch between Scenarios (management situations), Decisions (3 operational choices), Allocations (budget & time), Metrics (15 KPIs), and Trends (graphs). Badges show completion progress.',
   },
   {
     id: 'content',
-    icon: '🎯',
+    icon: Target,
     title: 'Content Area',
     description:
       'This is where the action happens. Read scenarios and choose responses, make weekly decisions, allocate resources, check metrics, and review results after each submission.',
   },
   {
     id: 'footer',
-    icon: '🚀',
+    icon: Send,
     title: 'Submit Footer',
     description:
       "Shows how many scenarios, decisions, and allocations you've completed. Once all are set, the Submit button activates. Click it to process your week and see the results.",
@@ -57,7 +59,7 @@ export function TutorialPrompt({
   return (
     <div className="tutorial-overlay" role="dialog" aria-label="Tutorial prompt">
       <div className="tutorial-card">
-        <div className="text-5xl mb-4">🏪</div>
+        <div className="mb-4 text-text-secondary"><Store size={48} strokeWidth={1.5} /></div>
         <h2 className="text-xl font-bold mb-2">Welcome to Store Manager Sim</h2>
         <p className="text-text-secondary text-sm mb-6">
           Would you like a quick walkthrough of the interface before you start?
@@ -103,7 +105,7 @@ export function TutorialOverlay({
       </div>
 
       {/* Icon */}
-      <div className="tutorial-icon">{currentStep.icon}</div>
+      <div className="tutorial-icon"><currentStep.icon size={48} strokeWidth={1.5} /></div>
 
       {/* Title */}
       <h3 className="tutorial-title">{currentStep.title}</h3>

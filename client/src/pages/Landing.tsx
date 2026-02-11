@@ -1,4 +1,7 @@
 import { useNavigate } from 'react-router-dom';
+import { BarChart3, Target, Zap, Trophy } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
+import type { ComponentType } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -37,17 +40,17 @@ export default function Landing() {
 
         {/* Feature list */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 stagger-children">
-          {[
-            { icon: '📊', label: '15 Live Metrics' },
-            { icon: '🎯', label: '4 Decisions/Round' },
-            { icon: '⚡', label: 'Random Events' },
-            { icon: '🏆', label: 'Final Scorecard' },
-          ].map((f) => (
+          {([
+            { Icon: BarChart3, label: '15 Live Metrics' },
+            { Icon: Target, label: '4 Decisions/Round' },
+            { Icon: Zap, label: 'Random Events' },
+            { Icon: Trophy, label: 'Final Scorecard' },
+          ] as { Icon: ComponentType<LucideProps>; label: string }[]).map((f) => (
             <div
               key={f.label}
               className="bg-surface-light border border-border rounded-xl p-4 text-center"
             >
-              <div className="text-2xl mb-2">{f.icon}</div>
+              <div className="flex justify-center mb-2 text-text-secondary"><f.Icon size={24} /></div>
               <div className="text-sm text-text-secondary font-medium">{f.label}</div>
             </div>
           ))}

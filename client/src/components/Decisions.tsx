@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import type { DecisionTemplate, DecisionOption } from 'shared';
+import { Briefcase, Users, Settings } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 
 interface DecisionsProps {
   templates: DecisionTemplate[];
@@ -9,20 +11,20 @@ interface DecisionsProps {
   onAllComplete?: () => void;
 }
 
-const CATEGORY_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
+const CATEGORY_LABELS: Record<string, { label: string; Icon: ComponentType<LucideProps>; desc: string }> = {
   commercial: {
     label: 'Commercial Strategy',
-    icon: '💼',
+    Icon: Briefcase,
     desc: 'How will you position your store in the market this week?',
   },
   labour: {
     label: 'Labour & Staffing',
-    icon: '👥',
+    Icon: Users,
     desc: 'How will you manage your team\'s hours and capacity?',
   },
   operations: {
     label: 'Operations Focus',
-    icon: '⚙️',
+    Icon: Settings,
     desc: 'Where will you direct your operations effort?',
   },
 };
@@ -118,7 +120,7 @@ export default function Decisions({
       {/* Current decision card */}
       <div key={template.id} className="animate-fadeIn">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">{cat?.icon}</span>
+          {cat && <cat.Icon size={20} className="text-text-secondary flex-shrink-0" />}
           <div>
             <h3 className="text-base font-bold">{cat?.label || template.title}</h3>
             <p className="text-xs text-text-muted">{cat?.desc}</p>

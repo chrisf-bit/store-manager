@@ -7,6 +7,7 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts';
+import { CheckCircle, AlertTriangle, Target, Download } from 'lucide-react';
 import type { EndReport } from 'shared';
 import { api } from '../api';
 
@@ -163,7 +164,7 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-surface-light border border-emerald-500/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span>✅</span> Strengths
+            <CheckCircle size={16} /> Strengths
           </h3>
           <ul className="space-y-2">
             {report.strengths.map((s, i) => (
@@ -176,7 +177,7 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
 
         <div className="bg-surface-light border border-red-500/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span>⚠️</span> Risks
+            <AlertTriangle size={16} /> Risks
           </h3>
           <ul className="space-y-2">
             {report.risks.map((r, i) => (
@@ -189,7 +190,7 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
 
         <div className="bg-surface-light border border-blue-500/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span>🎯</span> Recommendations
+            <Target size={16} /> Recommendations
           </h3>
           <ul className="space-y-2">
             {report.recommendations.map((r, i) => (
@@ -204,7 +205,7 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pb-12">
         <button onClick={handleDownload} className="btn-secondary">
-          📥 Download JSON Report
+          <Download size={16} /> Download JSON Report
         </button>
         <button onClick={onRestart} className="btn-primary">
           Play Again

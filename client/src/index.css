@@ -231,7 +231,7 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 .tutorial-step-counter { font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
-.tutorial-icon { font-size: 4rem; margin-bottom: 24px; animation: tutorialIconPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.tutorial-icon { margin-bottom: 24px; color: var(--color-text-secondary); animation: tutorialIconPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 @keyframes tutorialIconPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .tutorial-title { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 16px 0; text-align: center; }
 .tutorial-description { font-size: 1rem; color: rgba(245,245,245,0.8); line-height: 1.6; text-align: center; max-width: 360px; margin: 0 0 32px 0; }
@@ -325,7 +325,7 @@ body {
   .metric-overlay-panel { min-width: unset; width: 95vw; padding: 20px 16px; }
 
   /* Tutorial cards: slightly smaller on mobile */
-  .tutorial-icon { font-size: 3rem; margin-bottom: 16px; }
+  .tutorial-icon { margin-bottom: 16px; }
   .tutorial-title { font-size: 1.25rem; }
   .tutorial-description { font-size: 0.9rem; max-width: 300px; }
 

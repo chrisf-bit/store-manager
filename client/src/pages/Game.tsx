@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, type ComponentType } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type {
   SimulationRun,
@@ -9,6 +9,8 @@ import type {
   Metrics,
   Scenario,
 } from 'shared';
+import { Wallet, Heart, Users, Settings } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import { api } from '../api';
 import GuidePanel from '../components/GuidePanel';
 import { TutorialPrompt, TutorialOverlay, TUTORIAL_STEPS } from '../components/Tutorial';
@@ -34,10 +36,10 @@ interface MetricDef {
   unit?: string;
 }
 
-const METRIC_GROUPS: { title: string; icon: string; metrics: MetricDef[] }[] = [
+const METRIC_GROUPS: { title: string; Icon: ComponentType<LucideProps>; metrics: MetricDef[] }[] = [
   {
     title: 'Financial',
-    icon: '💰',
+    Icon: Wallet,
     metrics: [
       { key: 'revenue', category: 'financial', prefix: '£' },
       { key: 'grossMarginPct', category: 'financial', unit: '%' },
@@ -49,7 +51,7 @@ const METRIC_GROUPS: { title: string; icon: string; metrics: MetricDef[] }[] = [
   },
   {
     title: 'Customer',
-    icon: '😊',
+    Icon: Heart,
     metrics: [
       { key: 'customerSatisfaction', category: 'customer' },
       { key: 'complaintsCount', category: 'customer' },
@@ -58,7 +60,7 @@ const METRIC_GROUPS: { title: string; icon: string; metrics: MetricDef[] }[] = [
   },
   {
     title: 'People',
-    icon: '👥',
+    Icon: Users,
     metrics: [
       { key: 'engagementScore', category: 'people' },
       { key: 'absenceRatePct', category: 'people', unit: '%' },
@@ -67,7 +69,7 @@ const METRIC_GROUPS: { title: string; icon: string; metrics: MetricDef[] }[] = [
   },
   {
     title: 'Operations',
-    icon: '⚙️',
+    Icon: Settings,
     metrics: [
       { key: 'availabilityPct', category: 'operations', unit: '%' },
       { key: 'queueTimeMins', category: 'operations', unit: ' mins' },
@@ -540,7 +542,7 @@ export default function Game() {
                   {METRIC_GROUPS.map((group) => (
                     <div key={group.title}>
                       <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span>{group.icon}</span> {group.title}
+                        <group.Icon size={16} className="text-text-muted" /> {group.title}
                       </h3>
                       <div className="metrics-grid">
                         {group.metrics.map((m) => (
@@ -637,7 +639,7 @@ export default function Game() {
                     {METRIC_GROUPS.map((group) => (
                       <div key={group.title}>
                         <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span>{group.icon}</span> {group.title}
+                          <group.Icon size={16} className="text-text-muted" /> {group.title}
                         </h3>
                         <div className="metrics-grid">
                           {group.metrics.map((m) => (
