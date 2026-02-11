@@ -438,17 +438,17 @@ export default function Game() {
       {/* Main content */}
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header ref={headerRef} className="flex-shrink-0 bg-surface/90 backdrop-blur-sm border-b border-border px-4 md:px-6 py-3 z-20">
-          <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0">
+        <header ref={headerRef} className="flex-shrink-0 bg-surface/90 backdrop-blur-sm border-b border-border px-3 md:px-6 py-2 md:py-3 z-20">
+          <div className="flex items-center justify-between max-w-5xl mx-auto gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-bold text-white">SM</span>
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-bold truncate">
                   {run?.storeName || 'FreshWay Markets'}
                 </h1>
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-text-muted hidden sm:block">
                   {run?.storeSize &&
                     `${run.storeSize.charAt(0).toUpperCase() + run.storeSize.slice(1)} store`}
                   {run?.region && ` \u00B7 ${run.region}`}
@@ -502,7 +502,7 @@ export default function Game() {
         )}
 
         {/* Scrollable content area */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4">
           <div className="max-w-5xl mx-auto">
             {/* Error toast */}
             {error && (
@@ -693,8 +693,8 @@ export default function Game() {
 
         {/* Submit footer — during active phase */}
         {phase === 'active' && (
-          <div ref={footerRef} className="flex-shrink-0 border-t border-border bg-surface-light/80 backdrop-blur-sm px-4 py-3 z-10">
-            <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+          <div ref={footerRef} className="flex-shrink-0 border-t border-border bg-surface-light/80 backdrop-blur-sm px-3 md:px-4 py-2 md:py-3 z-10">
+            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
               <div className="text-sm text-text-secondary hidden sm:block">
                 {scenarios.length > 0 && (
                   <>
@@ -722,7 +722,7 @@ export default function Game() {
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit || submitting}
-                className="btn-primary"
+                className="btn-primary flex-shrink-0"
               >
                 {submitting ? (
                   <>

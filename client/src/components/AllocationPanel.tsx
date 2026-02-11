@@ -134,17 +134,17 @@ export default function AllocationPanel({
         </div>
 
         {/* Remaining indicator */}
-        <div className="flex items-center justify-between mb-4 px-3 py-2 bg-surface-light border border-border rounded-lg">
-          <span className="text-sm text-text-secondary">
+        <div className="flex items-center justify-between mb-3 md:mb-4 px-3 py-2 bg-surface-light border border-border rounded-lg">
+          <span className="text-xs md:text-sm text-text-secondary">
             Total: <strong className="text-text-primary">{formatValue(template.total)}</strong>
           </span>
-          <span className={`text-sm font-bold ${remaining === 0 ? 'text-emerald-400' : remaining < 0 ? 'text-red-400' : 'text-amber-400'}`}>
+          <span className={`text-xs md:text-sm font-bold ${remaining === 0 ? 'text-emerald-400' : remaining < 0 ? 'text-red-400' : 'text-amber-400'}`}>
             {remaining === 0 ? 'Fully allocated' : `${formatValue(remaining)} remaining`}
           </span>
         </div>
 
         {/* Allocation items */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 md:gap-3">
           {template.items.map((item) => {
             const value = current[item.key] || 0;
             const pct = template.total > 0 ? (value / template.total) * 100 : 0;
@@ -152,14 +152,14 @@ export default function AllocationPanel({
             return (
               <div
                 key={item.key}
-                className={`bg-surface-light border rounded-lg px-4 py-3 ${
+                className={`bg-surface-light border rounded-lg px-3 md:px-4 py-2.5 md:py-3 ${
                   isConfirmed ? 'border-border opacity-80' : 'border-border'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-sm font-semibold">{item.label}</span>
-                    <p className="text-xs text-text-muted">{item.description}</p>
+                    <p className="text-xs text-text-muted hidden sm:block">{item.description}</p>
                   </div>
                   <span className="text-sm font-bold text-brand-400 ml-3 whitespace-nowrap">
                     {formatValue(value)}
@@ -167,11 +167,11 @@ export default function AllocationPanel({
                 </div>
 
                 {/* Slider row with +/- buttons */}
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-1.5 md:mt-2">
                   <button
                     onClick={() => handleChange(item.key, -template.step)}
                     disabled={isConfirmed || value <= 0}
-                    className="w-7 h-7 rounded-md bg-surface border border-border flex items-center justify-center text-text-secondary hover:bg-surface-lighter disabled:opacity-30 transition-colors flex-shrink-0"
+                    className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-surface border border-border flex items-center justify-center text-text-secondary hover:bg-surface-lighter disabled:opacity-30 transition-colors flex-shrink-0"
                   >
                     -
                   </button>
@@ -191,7 +191,7 @@ export default function AllocationPanel({
                   <button
                     onClick={() => handleChange(item.key, template.step)}
                     disabled={isConfirmed || remaining <= 0}
-                    className="w-7 h-7 rounded-md bg-surface border border-border flex items-center justify-center text-text-secondary hover:bg-surface-lighter disabled:opacity-30 transition-colors flex-shrink-0"
+                    className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-surface border border-border flex items-center justify-center text-text-secondary hover:bg-surface-lighter disabled:opacity-30 transition-colors flex-shrink-0"
                   >
                     +
                   </button>

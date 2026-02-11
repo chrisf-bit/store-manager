@@ -92,8 +92,8 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
       {/* Radar chart + scorecard grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Radar */}
-        <div className="bg-surface-light border border-border rounded-xl p-6 flex items-center justify-center">
-          <div className="w-full h-72">
+        <div className="bg-surface-light border border-border rounded-xl p-4 md:p-6 flex items-center justify-center">
+          <div className="w-full h-56 md:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
                 <PolarGrid stroke="#334155" />
@@ -113,7 +113,7 @@ export default function EndSummary({ runId, onRestart }: EndSummaryProps) {
         </div>
 
         {/* Scorecard cards */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {report.scorecard.map((cat) => (
             <div
               key={cat.name}

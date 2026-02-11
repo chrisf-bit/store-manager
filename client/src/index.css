@@ -222,25 +222,28 @@ body {
 .tutorial-overlay { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.3s ease-out; }
 .tutorial-card { background: var(--color-surface-card); border: 1px solid var(--color-border); border-radius: 16px; padding: 40px 32px; max-width: 420px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s ease-out; }
 
-/* ===== MOBILE ===== */
-.mobile-guide-btn { display: none; position: fixed; bottom: 16px; left: 16px; width: 48px; height: 48px; border-radius: 50%; background: var(--color-brand-600); color: white; border: none; font-size: 18px; cursor: pointer; z-index: 40; box-shadow: 0 4px 16px rgba(0,0,0,0.3); align-items: center; justify-content: center; }
-.guide-backdrop { display: none; }
-
-@media (max-width: 768px) {
-  .guide-panel { position: fixed; top: 0; left: 0; width: 85vw; min-width: 85vw; max-width: 340px; height: 100vh; z-index: 50; box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
-  .guide-panel.collapsed { transform: translateX(-100%); width: 85vw; min-width: 85vw; }
-  .guide-toggle { display: none; }
-  .mobile-guide-btn { display: flex; }
-  .guide-backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-  .guide-backdrop.visible { opacity: 1; pointer-events: auto; }
-  .btn-primary { padding: 12px 28px; width: 100%; justify-content: center; }
-  .game-tab { padding: 10px 14px; font-size: 12px; }
+/* ===== TUTORIAL CARD OVERLAY (full-screen cards) ===== */
+.tutorial-card-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.95);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.3s ease-out;
 }
+.tutorial-step-counter { font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.tutorial-icon { font-size: 4rem; margin-bottom: 24px; animation: tutorialIconPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes tutorialIconPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.tutorial-title { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 16px 0; text-align: center; }
+.tutorial-description { font-size: 1rem; color: rgba(245,245,245,0.8); line-height: 1.6; text-align: center; max-width: 360px; margin: 0 0 32px 0; }
+.tutorial-dots { display: flex; gap: 8px; margin-bottom: 32px; }
+.tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.3s; }
+.tutorial-dot.active { background: var(--color-brand-500); width: 24px; border-radius: 4px; }
+.tutorial-dot.done { background: var(--color-brand-600); }
+.tutorial-nav { display: flex; align-items: center; gap: 16px; }
+.tutorial-skip-btn { background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; color: rgba(255,255,255,0.5); font-size: 13px; padding: 8px 16px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+.tutorial-skip-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
-*:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
-
-/* Allocation slider */
+/* ===== ALLOCATION SLIDER ===== */
 .allocation-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -280,3 +283,65 @@ body {
   border-radius: 3px;
   background: var(--color-brand-500);
 }
+
+/* ===== MOBILE ===== */
+.mobile-guide-btn { display: none; position: fixed; bottom: 16px; left: 16px; width: 48px; height: 48px; border-radius: 50%; background: var(--color-brand-600); color: white; border: none; font-size: 18px; cursor: pointer; z-index: 40; box-shadow: 0 4px 16px rgba(0,0,0,0.3); align-items: center; justify-content: center; }
+.guide-backdrop { display: none; }
+
+@media (max-width: 768px) {
+  .guide-panel { position: fixed; top: 0; left: 0; width: 85vw; min-width: 85vw; max-width: 340px; height: 100vh; z-index: 50; box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+  .guide-panel.collapsed { transform: translateX(-100%); width: 85vw; min-width: 85vw; }
+  .guide-toggle { display: none; }
+  .mobile-guide-btn { display: flex; }
+  .guide-backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .guide-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+  /* Buttons: slightly larger touch targets on mobile */
+  .btn-primary { padding: 12px 20px; }
+  .btn-secondary { padding: 10px 16px; }
+
+  /* Tabs: tighter for small screens */
+  .game-tab { padding: 10px 14px; font-size: 12px; }
+
+  /* Round indicator: compact on mobile */
+  .round-connector { width: 8px; }
+  .round-dot { min-width: 28px; height: 24px; font-size: 10px; }
+
+  /* Metric cards: tighter spacing */
+  .metric-card { padding: 10px; }
+  .metrics-grid { gap: 6px; }
+
+  /* Scenario options: larger touch target */
+  .scenario-option { padding: 14px 16px; }
+
+  /* Decision options: larger touch target */
+  .decision-option { padding: 14px 12px; }
+
+  /* Allocation slider: larger thumb for touch */
+  .allocation-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
+  .allocation-slider::-moz-range-thumb { width: 22px; height: 22px; }
+
+  /* Metric overlay: wider on mobile */
+  .metric-overlay-panel { min-width: unset; width: 95vw; padding: 20px 16px; }
+
+  /* Tutorial cards: slightly smaller on mobile */
+  .tutorial-icon { font-size: 3rem; margin-bottom: 16px; }
+  .tutorial-title { font-size: 1.25rem; }
+  .tutorial-description { font-size: 0.9rem; max-width: 300px; }
+
+  /* Tutorial nav: don't go full width for these buttons */
+  .tutorial-nav .btn-primary,
+  .tutorial-nav .btn-secondary,
+  .tutorial-skip-btn { width: auto; }
+}
+
+/* Small phones (< 380px) */
+@media (max-width: 380px) {
+  .game-tab { padding: 8px 10px; font-size: 11px; }
+  .game-tab .tab-badge { font-size: 9px; padding: 0 4px; }
+  .round-connector { display: none; }
+  .round-dot { min-width: 24px; height: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+*:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
