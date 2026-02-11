@@ -32,7 +32,7 @@ export default function Landing() {
         <p className="text-text-secondary text-base md:text-lg mb-10 max-w-lg mx-auto animate-fadeIn">
           Step into the shoes of a retail store manager. Make 4 rounds of
           decisions across commercial strategy, staffing, operations, and
-          investment — and see how your store performs.
+          investment, and see how your store performs.
         </p>
 
         {/* Feature list */}
@@ -65,7 +65,7 @@ export default function Landing() {
         </button>
 
         <p className="text-text-muted text-sm mt-6">
-          Demo mode — no login required. Takes about 10 minutes.
+          Demo mode, no login required. Takes about 10 minutes.
         </p>
       </div>
     </div>

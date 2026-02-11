@@ -40,28 +40,29 @@ function getGuideContent(round: number, guidePhase: GuidePhase, gamePhase: GameP
     };
   }
 
-  const weekNum = round + 1;
+  // During results/reflect phase, currentRound has already been incremented
+  const weekNum = gamePhase === 'results' ? round : round + 1;
 
   if (guidePhase === 'plan') {
     const planContent: Record<number, GuideContent> = {
       1: {
-        title: `Week ${weekNum} — Plan`,
-        content: 'Review your current metrics and read through this week\'s scenarios. Each scenario presents a realistic management challenge — think about the trade-offs before deciding.',
+        title: `Week ${weekNum}: Plan`,
+        content: 'Review your current metrics and read through this week\'s scenarios. Each scenario presents a realistic management challenge, so think about the trade-offs before deciding.',
         tip: 'Check the Metrics tab to see where your store stands. Understanding your position helps you make better scenario choices.',
       },
       2: {
-        title: `Week ${weekNum} — Plan`,
+        title: `Week ${weekNum}: Plan`,
         content: 'You\'re building momentum. Review how your metrics shifted last week and read this week\'s new scenarios carefully. Your decisions are starting to compound.',
-        tip: 'Watch your trends in the Charts tab. Consistent small improvements compound over 4 rounds.',
+        tip: 'Watch your trends in the Trends tab. Consistent small improvements compound over 4 rounds.',
       },
       3: {
-        title: `Week ${weekNum} — Plan`,
-        content: 'You\'re under pressure now. Check where your biggest gaps are — compliance, engagement, satisfaction, profitability? This week\'s scenarios will test your priorities.',
+        title: `Week ${weekNum}: Plan`,
+        content: 'You\'re under pressure now. Check where your biggest gaps are: compliance, engagement, satisfaction, profitability. This week\'s scenarios will test your priorities.',
         tip: 'Think about what your scorecard will look like. Balance is key to a good grade.',
       },
       4: {
-        title: `Week ${weekNum} — Final Plan`,
-        content: 'Last week. Review everything carefully — this is your final chance to influence the outcome. The scenarios this week are about legacy and finishing strong.',
+        title: `Week ${weekNum}: Final Plan`,
+        content: 'Last week. Review everything carefully. This is your final chance to influence the outcome. The scenarios this week are about legacy and finishing strong.',
         tip: 'Focus on your weakest scorecard area for maximum impact.',
       },
     };
@@ -70,28 +71,28 @@ function getGuideContent(round: number, guidePhase: GuidePhase, gamePhase: GameP
 
   if (guidePhase === 'execute') {
     return {
-      title: `Week ${weekNum} — Execute`,
-      content: 'Select your responses to each scenario and make your 4 operational decisions. There\'s no single "right" answer — think about what your store needs most right now.',
-      tip: 'Don\'t forget to check both the Scenarios and Decisions tabs. You need to complete both to submit.',
+      title: `Week ${weekNum}: Execute`,
+      content: 'Select your responses to each scenario, make your 3 operational decisions, and allocate your budget and management time. Think about what your store needs most right now.',
+      tip: 'Complete Scenarios, Decisions, and Allocations to submit. Spread your budget and time wisely across all four areas.',
     };
   }
 
   // reflect
   const reflectContent: Record<number, GuideContent> = {
     1: {
-      title: `Week ${weekNum} — Reflect`,
+      title: `Week ${weekNum}: Reflect`,
       content: 'Your first week\'s results are in. Green numbers are improvements, red numbers show deterioration. Look at the metric changes to understand cause and effect.',
     },
     2: {
-      title: `Week ${weekNum} — Reflect`,
-      content: 'Halfway through. Are you seeing the trade-offs from your decisions? Check the Charts tab to see your trajectory over time.',
+      title: `Week ${weekNum}: Reflect`,
+      content: 'Halfway through. Are you seeing the trade-offs from your decisions? Check the Trends tab to see your trajectory over time.',
     },
     3: {
-      title: `Week ${weekNum} — Reflect`,
-      content: 'Third week done. Your trends are established now. One round left — use these results to plan your final approach.',
+      title: `Week ${weekNum}: Reflect`,
+      content: 'Third week done. Your trends are established now. One round left, so use these results to plan your final approach.',
     },
     4: {
-      title: `Week ${weekNum} — Final Reflect`,
+      title: `Week ${weekNum}: Final Reflect`,
       content: 'That\'s your final week complete! Head to the Results tab to see the full impact, then continue to your performance review and scorecard.',
     },
   };
@@ -135,7 +136,7 @@ const GuidePanel = forwardRef<HTMLElement, GuidePanelProps>(function GuidePanel(
                       guidePhase === p ? 'active' : isPhaseDone(guidePhase, p) ? 'done' : ''
                     }`}
                   >
-                    {isPhaseDone(guidePhase, p) ? '\u2713' : i + 1}
+                    {isPhaseDone(guidePhase, p) ? '\u2713' : ''}
                   </div>
                   <span
                     className={`phase-label ${
@@ -168,7 +169,7 @@ const GuidePanel = forwardRef<HTMLElement, GuidePanelProps>(function GuidePanel(
                       completed ? 'completed' : current ? 'current' : 'upcoming'
                     }`}
                   >
-                    {completed ? '\u2713' : `Q${r}`}
+                    {completed ? '\u2713' : `W${r}`}
                   </div>
                   {i < 3 && (
                     <div className={`round-connector ${completed ? 'completed' : ''}`} />
@@ -219,8 +220,9 @@ const GuidePanel = forwardRef<HTMLElement, GuidePanelProps>(function GuidePanel(
             {gamePhase === 'active' && (
               <div className="mt-4 p-3 bg-surface-card border border-border rounded-lg">
                 <p className="text-xs text-text-muted">
-                  Complete all <strong className="text-text-secondary">Scenarios</strong> and{' '}
-                  <strong className="text-text-secondary">Decisions</strong> to submit your week.
+                  Complete <strong className="text-text-secondary">Scenarios</strong>,{' '}
+                  <strong className="text-text-secondary">Decisions</strong>, and{' '}
+                  <strong className="text-text-secondary">Allocations</strong> to submit your week.
                 </p>
               </div>
             )}
@@ -233,9 +235,9 @@ const GuidePanel = forwardRef<HTMLElement, GuidePanelProps>(function GuidePanel(
         <div className="flex flex-col items-center pt-16 gap-4">
           <div
             className="w-6 h-6 rounded-full bg-brand-600 text-white text-xs flex items-center justify-center font-bold"
-            title={`Q${currentRound + 1}`}
+            title={`W${currentRound + 1}`}
           >
-            {currentRound + 1 > 4 ? '\u2713' : `Q${currentRound + 1}`}
+            {currentRound + 1 > 4 ? '\u2713' : `W${currentRound + 1}`}
           </div>
           <div className="text-xs text-text-muted" style={{ writingMode: 'vertical-rl' }}>
             Guide

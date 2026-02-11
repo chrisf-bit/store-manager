@@ -14,7 +14,6 @@ export const DecisionCategorySchema = z.enum([
   'commercial',
   'labour',
   'operations',
-  'investment',
 ]);
 
 export const SubmitDecisionsSchema = z.object({
@@ -23,7 +22,13 @@ export const SubmitDecisionsSchema = z.object({
       decisionTemplateId: z.string().uuid(),
       optionKey: z.string().min(1),
     })
-  ).length(4),
+  ).length(3),
+  allocations: z.array(
+    z.object({
+      allocationTemplateId: z.string().min(1),
+      allocations: z.record(z.string(), z.number().min(0)),
+    })
+  ).length(2),
   scenarioSelections: z.array(
     z.object({
       scenarioId: z.string().min(1),

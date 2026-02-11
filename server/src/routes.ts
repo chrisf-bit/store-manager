@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { CreateRunSchema, SubmitDecisionsSchema } from 'shared';
-import type { Metrics, DecisionTemplate, DecisionOption, EndReport, ScorecardCategory } from 'shared';
+import type { Metrics, DecisionTemplate, DecisionOption, AllocationTemplate, EndReport, ScorecardCategory } from 'shared';
 import {
   getInitialMetrics,
   resolveRound,
@@ -11,6 +11,7 @@ import {
   generateStrengths,
   generateRisks,
   generateRecommendations,
+  type AllocationSet,
 } from './sim/engine';
 import { createRng } from './sim/helpers';
 import { getScenariosForRound } from './sim/scenarios';
@@ -126,6 +127,19 @@ router.get('/runs/:id/round/:n', (req, res) => {
       }
     }
 
+    // Get allocation templates
+    const allocTemplates = store.getAllocationTemplates();
+    const allocationTemplates: AllocationTemplate[] = allocTemplates.map((at) => ({
+      id: at.id,
+      category: at.category,
+      title: at.title,
+      description: at.description,
+      total: at.total,
+      unit: at.unit,
+      step: at.step,
+      items: at.itemsJson,
+    }));
+
     // Get scenarios for the next round
     const nextRound = roundNumber + 1;
     const scenarios = nextRound <= 4 ? getScenariosForRound(nextRound) : [];
@@ -139,6 +153,7 @@ router.get('/runs/:id/round/:n', (req, res) => {
         narrativeText: roundState.narrativeText,
       },
       decisions,
+      allocationTemplates,
       scenarios,
       previousDecisions,
       previousEvent,
@@ -205,11 +220,28 @@ router.post('/runs/:id/round/:n/decisions', (req, res) => {
       decisionSet[template.category] = dec.optionKey;
     }
 
-    for (const cat of ['commercial', 'labour', 'operations', 'investment']) {
+    for (const cat of ['commercial', 'labour', 'operations']) {
       if (!decisionSet[cat]) {
         res.status(400).json({ error: `Missing decision for category: ${cat}` });
         return;
       }
+    }
+
+    // Validate allocations
+    const allocationData = parsed.data.allocations;
+    const allocSet: AllocationSet = { budget: {}, time: {} };
+    for (const alloc of allocationData) {
+      const template = store.getAllocationTemplate(alloc.allocationTemplateId);
+      if (!template) {
+        res.status(400).json({ error: `Invalid allocation template: ${alloc.allocationTemplateId}` });
+        return;
+      }
+      const totalAllocated = Object.values(alloc.allocations).reduce((sum, v) => sum + v, 0);
+      if (totalAllocated > template.total) {
+        res.status(400).json({ error: `${template.title} allocation exceeds total (${totalAllocated} > ${template.total})` });
+        return;
+      }
+      allocSet[template.category] = alloc.allocations;
     }
 
     // Create RNG for this round
@@ -254,7 +286,8 @@ router.post('/runs/:id/round/:n/decisions', (req, res) => {
     // Resolve the round
     const resolution = resolveRound(
       currentMetrics,
-      decisionSet as { commercial: string; labour: string; operations: string; investment: string },
+      decisionSet as { commercial: string; labour: string; operations: string },
+      allocSet,
       combinedEventEffects,
       rng
     );
@@ -267,7 +300,7 @@ router.post('/runs/:id/round/:n/decisions', (req, res) => {
       resolution.newMetrics,
       currentMetrics,
       { title: eventTemplate.title, description: eventTemplate.description },
-      decisionSet as { commercial: string; labour: string; operations: string; investment: string },
+      decisionSet as { commercial: string; labour: string; operations: string },
       roundNumber
     );
 

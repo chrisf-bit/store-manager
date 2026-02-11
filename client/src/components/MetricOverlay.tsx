@@ -85,17 +85,17 @@ export default function MetricOverlay({
         aria-label="Key metric changes this quarter"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <h2 className="text-lg font-bold text-text-primary uppercase tracking-wide">
             Key Metric Changes
           </h2>
           <span className="text-xs text-text-muted bg-brand-600/20 px-3 py-1 rounded-full">
-            Q{roundNumber}
+            Week {roundNumber}
           </span>
         </div>
 
-        {/* Animated alert tiles */}
-        <div className="flex flex-col gap-2 mb-6">
+        {/* Animated alert tiles — scrollable */}
+        <div className="flex flex-col gap-2 mb-4 flex-1 min-h-0 overflow-y-auto">
           {notifications.map((n, i) => {
             const displayDelta = n.delta > 0 ? `+${n.delta}` : `${n.delta}`;
 
@@ -115,7 +115,7 @@ export default function MetricOverlay({
         </div>
 
         {/* Close button */}
-        <button onClick={onClose} className="btn-primary w-full justify-center">
+        <button onClick={onClose} className="btn-primary w-full justify-center flex-shrink-0">
           Continue
         </button>
       </div>

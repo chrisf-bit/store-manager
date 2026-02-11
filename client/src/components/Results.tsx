@@ -61,15 +61,22 @@ export default function Results({
     return template?.title || 'Unknown';
   };
 
+  // Only show top metric changes to avoid scrolling
+  const topDeltas = sortedDeltas.slice(0, 6);
+
   return (
     <div className="animate-fadeIn">
-      <h2 className="text-xl font-bold mb-2">Week {roundNumber} Results</h2>
-      <p className="text-sm text-text-secondary mb-6">
-        Here's how your store performed this week.
-      </p>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold">Week {roundNumber} Results</h2>
+        {event?.eventTemplate && (
+          <span className="text-xs font-semibold text-warning bg-warning/10 px-3 py-1 rounded-full">
+            Event: {event.eventTemplate.title}
+          </span>
+        )}
+      </div>
 
-      {/* Narrative */}
-      <div className="bg-surface-light border border-border rounded-xl p-4 md:p-6 mb-6">
+      {/* Narrative - compact */}
+      <div className="bg-surface-light border border-border rounded-xl p-4 mb-4">
         <div
           className="text-sm text-text-secondary leading-relaxed prose-strong:text-text-primary"
           dangerouslySetInnerHTML={{
@@ -80,82 +87,72 @@ export default function Results({
         />
       </div>
 
-      {/* Event */}
-      {event?.eventTemplate && (
-        <div className="event-card mb-6 animate-slideUp">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">⚡</span>
-            <h3 className="font-bold text-warning">{event.eventTemplate.title}</h3>
-          </div>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {event.eventTemplate.description}
-          </p>
-        </div>
-      )}
-
-      {/* Your decisions recap */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-          Your Decisions
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {result.decisions.map((dec) => (
-            <div
-              key={dec.decisionTemplateId}
-              className="bg-surface-light border border-border rounded-lg px-4 py-3 flex items-center gap-3"
-            >
-              <div className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="text-xs text-text-muted truncate">{getTemplateTitle(dec.decisionTemplateId)}</div>
-                <div className="text-sm font-medium truncate">{getDecisionLabel(dec.decisionTemplateId, dec.optionKey)}</div>
+      {/* Decisions + Metric changes side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        {/* Your decisions recap */}
+        <div>
+          <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+            Your Decisions
+          </h3>
+          <div className="flex flex-col gap-1.5">
+            {result.decisions.map((dec) => (
+              <div
+                key={dec.decisionTemplateId}
+                className="bg-surface-light border border-border rounded-lg px-3 py-2 flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-500 flex-shrink-0" />
+                <div className="min-w-0">
+                  <span className="text-xs text-text-muted">{getTemplateTitle(dec.decisionTemplateId)}: </span>
+                  <span className="text-xs font-medium">{getDecisionLabel(dec.decisionTemplateId, dec.optionKey)}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Metric changes */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-          Metric Changes
-        </h3>
-        {sortedDeltas.length === 0 ? (
-          <p className="text-sm text-text-muted">No significant changes this round.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 stagger-children">
-            {sortedDeltas.map(([key, delta]) => {
-              const isInverse = INVERSE_METRICS.has(key);
-              const isGood = (delta > 0 && !isInverse) || (delta < 0 && isInverse);
-              return (
-                <div
-                  key={key}
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg border ${
-                    isGood
-                      ? 'bg-emerald-500/5 border-emerald-500/20'
-                      : 'bg-red-500/5 border-red-500/20'
-                  }`}
-                >
-                  <span className="text-sm text-text-secondary">{formatLabel(key)}</span>
-                  <span
-                    className={`text-sm font-bold ${
-                      isGood ? 'text-emerald-400' : 'text-red-400'
+        {/* Metric changes */}
+        <div>
+          <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+            Key Metric Changes
+          </h3>
+          {topDeltas.length === 0 ? (
+            <p className="text-xs text-text-muted">No significant changes this round.</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {topDeltas.map(([key, delta]) => {
+                const isInverse = INVERSE_METRICS.has(key);
+                const isGood = (delta > 0 && !isInverse) || (delta < 0 && isInverse);
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg border ${
+                      isGood
+                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        : 'bg-red-500/5 border-red-500/20'
                     }`}
                   >
-                    {delta > 0 ? '+' : ''}
-                    {Math.abs(delta) < 1 ? delta.toFixed(1) : Math.round(delta)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    <span className="text-xs text-text-secondary">{formatLabel(key)}</span>
+                    <span
+                      className={`text-xs font-bold ${
+                        isGood ? 'text-emerald-400' : 'text-red-400'
+                      }`}
+                    >
+                      {delta > 0 ? '+' : ''}
+                      {Math.abs(delta) < 1 ? delta.toFixed(1) : Math.round(delta)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Continue */}
-      <div className="mt-8 flex justify-center">
-        <button onClick={onContinue} className="btn-primary text-lg">
+      <div className="flex justify-center">
+        <button onClick={onContinue} className="btn-primary">
           {isLastRound ? 'View Final Scorecard' : `Continue to Week ${roundNumber + 1}`}
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
             <path d="M7 4L13 10L7 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

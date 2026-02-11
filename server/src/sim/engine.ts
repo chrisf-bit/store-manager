@@ -76,7 +76,11 @@ interface DecisionSet {
   commercial: string;
   labour: string;
   operations: string;
-  investment: string;
+}
+
+export interface AllocationSet {
+  budget: Record<string, number>;
+  time: Record<string, number>;
 }
 
 function getCommercialImpact(option: string, metrics: Metrics): Partial<Metrics> {
@@ -194,40 +198,43 @@ function getOperationsImpact(option: string): Partial<Metrics> {
   }
 }
 
-function getInvestmentImpact(option: string): Partial<Metrics> {
-  switch (option) {
-    case 'equipment':
-      return {
-        wastePct: -0.4,
-        availabilityPct: 2,
-        complianceScore: 2,
-        netProfit: 800,
-      };
-    case 'wellbeing':
-      return {
-        engagementScore: 5,
-        absenceRatePct: -0.5,
-        attritionRisk: -4,
-        customerSatisfaction: 1,
-      };
-    case 'marketing':
-      return {
-        footfall: 300,
-        revenue: 3000,
-        loyaltyIndex: 3,
-        customerSatisfaction: 1,
-      };
-    case 'training':
-      return {
-        complianceScore: 4,
-        engagementScore: 3,
-        customerSatisfaction: 2,
-        shrinkPct: -0.1,
-        conversion: 0.01,
-      };
-    default:
-      return {};
+// --- Allocation impact calculations (scaled by proportion) ---
+
+const BUDGET_TOTAL = 5000;
+const TIME_TOTAL = 40;
+
+// Base impacts at 100% allocation
+const BUDGET_IMPACTS: Record<string, Partial<Metrics>> = {
+  equipment: { wastePct: -0.4, availabilityPct: 2, complianceScore: 2, netProfit: 800 },
+  wellbeing: { engagementScore: 5, absenceRatePct: -0.5, attritionRisk: -4, customerSatisfaction: 1 },
+  marketing: { footfall: 300, revenue: 3000, loyaltyIndex: 3, customerSatisfaction: 1 },
+  training: { complianceScore: 4, engagementScore: 3, customerSatisfaction: 2, shrinkPct: -0.1, conversion: 0.01 },
+};
+
+const TIME_IMPACTS: Record<string, Partial<Metrics>> = {
+  floor_coaching: { customerSatisfaction: 3, availabilityPct: 2, conversion: 0.015, queueTimeMins: -0.5 },
+  team_meetings: { engagementScore: 4, complianceScore: 2, absenceRatePct: -0.3, attritionRisk: -2 },
+  admin: { complianceScore: 3, shrinkPct: -0.15, wastePct: -0.2, netProfit: 500 },
+  customer_focus: { customerSatisfaction: 4, loyaltyIndex: 3, complaintsCount: -2, footfall: 150 },
+};
+
+function getAllocationImpacts(
+  allocations: Record<string, number>,
+  baseImpacts: Record<string, Partial<Metrics>>,
+  total: number
+): Partial<Metrics> {
+  const result: Record<string, number> = {};
+  for (const [key, amount] of Object.entries(allocations)) {
+    const pct = total > 0 ? amount / total : 0;
+    const impacts = baseImpacts[key];
+    if (!impacts) continue;
+    for (const [metric, value] of Object.entries(impacts)) {
+      if (value !== undefined) {
+        result[metric] = (result[metric] || 0) + (value as number) * pct;
+      }
+    }
   }
+  return result as Partial<Metrics>;
 }
 
 // --- Event selection with weighted random ---
@@ -288,6 +295,7 @@ export interface RoundResolution {
 export function resolveRound(
   currentMetrics: Metrics,
   decisions: DecisionSet,
+  allocations: AllocationSet,
   eventEffects: Record<string, number>,
   rng: () => number
 ): RoundResolution {
@@ -306,7 +314,10 @@ export function resolveRound(
   addDeltas(getCommercialImpact(decisions.commercial, currentMetrics));
   addDeltas(getLabourImpact(decisions.labour, currentMetrics));
   addDeltas(getOperationsImpact(decisions.operations));
-  addDeltas(getInvestmentImpact(decisions.investment));
+
+  // Apply allocation impacts (scaled by proportion)
+  addDeltas(getAllocationImpacts(allocations.budget, BUDGET_IMPACTS, BUDGET_TOTAL));
+  addDeltas(getAllocationImpacts(allocations.time, TIME_IMPACTS, TIME_TOTAL));
 
   // Apply event effects
   addDeltas(eventEffects);
@@ -415,32 +426,32 @@ export function deriveNarrative(
     // Revenue trend
     const revDiff = metrics.revenue - prevMetrics.revenue;
     if (revDiff > 3000) {
-      parts.push('Revenue is up strongly — your trading decisions are paying off.');
+      parts.push('Revenue is up strongly. Your trading decisions are paying off.');
     } else if (revDiff > 0) {
       parts.push('Revenue has edged up slightly this week.');
     } else if (revDiff < -3000) {
       parts.push('Revenue has taken a noticeable hit this week. Time to review your approach.');
     } else if (revDiff < 0) {
-      parts.push('Revenue dipped slightly — keep an eye on the trend.');
+      parts.push('Revenue dipped slightly. Keep an eye on the trend.');
     }
 
     // Engagement
     if (metrics.engagementScore < 55) {
       parts.push('Team morale is low. Colleagues are disengaged and the atmosphere on the shop floor feels flat.');
     } else if (metrics.engagementScore > 80) {
-      parts.push('The team is energised and engaged — you can feel the positive atmosphere in store.');
+      parts.push('The team is energised and engaged. You can feel the positive atmosphere in store.');
     }
 
     // Customer satisfaction
     if (metrics.customerSatisfaction < 60) {
       parts.push('Customer satisfaction is concerning. Complaints are rising and loyalty is at risk.');
     } else if (metrics.customerSatisfaction > 82) {
-      parts.push('Customers are happy — satisfaction scores are strong.');
+      parts.push('Customers are happy. Satisfaction scores are strong.');
     }
 
     // Compliance
     if (metrics.complianceScore < 60) {
-      parts.push('Compliance is slipping — the store is exposed to risk if an audit happens.');
+      parts.push('Compliance is slipping. The store is exposed to risk if an audit happens.');
     }
 
     // Queue
@@ -449,11 +460,11 @@ export function deriveNarrative(
     }
   } else {
     parts.push(`Your ${decisions.commercial === 'protect_margin' ? 'margin-focused' : decisions.commercial === 'drive_volume' ? 'volume-driven' : decisions.commercial === 'aggressive_competitor' ? 'aggressive' : 'balanced'} commercial strategy is set for the week.`);
-    parts.push(`You've chosen to ${decisions.labour === 'cut_hours' ? 'cut hours — risky but cost-saving' : decisions.labour === 'add_hours' ? 'add hours — investing in the team' : decisions.labour === 'add_overtime' ? 'use overtime — a short-term fix' : 'hold hours steady'}.`);
+    parts.push(`You've chosen to ${decisions.labour === 'cut_hours' ? 'cut hours, risky but cost-saving' : decisions.labour === 'add_hours' ? 'add hours, investing in the team' : decisions.labour === 'add_overtime' ? 'use overtime, a short-term fix' : 'hold hours steady'}.`);
   }
 
   if (event) {
-    parts.push(`\n**Event: ${event.title}** — ${event.description}`);
+    parts.push(`\n**Event: ${event.title}** - ${event.description}`);
   }
 
   return parts.join(' ');
@@ -529,16 +540,16 @@ export function calculateGrade(overallScore: number): Grade {
 
 export function generateStrengths(metrics: Metrics): string[] {
   const strengths: string[] = [];
-  if (metrics.grossMarginPct > 30) strengths.push('Strong margin management — pricing discipline is delivering results.');
-  if (metrics.customerSatisfaction > 78) strengths.push('Customer satisfaction is high — your store is well-regarded locally.');
-  if (metrics.engagementScore > 75) strengths.push('Team engagement is excellent — colleagues are motivated and productive.');
-  if (metrics.availabilityPct > 96) strengths.push('On-shelf availability is outstanding — customers find what they need.');
-  if (metrics.complianceScore > 85) strengths.push('Compliance standards are strong — the store is well-controlled.');
-  if (metrics.loyaltyIndex > 75) strengths.push('Customer loyalty is building — repeat visits and basket growth are evident.');
-  if (metrics.wastePct < 2.0) strengths.push('Waste is well managed — minimal product loss.');
-  if (metrics.queueTimeMins < 3) strengths.push('Queue times are fast — customers are getting through quickly.');
-  if (metrics.netProfit > 18000) strengths.push('Net profit is strong — the P&L is healthy.');
-  if (metrics.attritionRisk < 25) strengths.push('Attrition risk is low — your team is stable.');
+  if (metrics.grossMarginPct > 30) strengths.push('Strong margin management. Pricing discipline is delivering results.');
+  if (metrics.customerSatisfaction > 78) strengths.push('Customer satisfaction is high. Your store is well-regarded locally.');
+  if (metrics.engagementScore > 75) strengths.push('Team engagement is excellent. Colleagues are motivated and productive.');
+  if (metrics.availabilityPct > 96) strengths.push('On-shelf availability is outstanding. Customers find what they need.');
+  if (metrics.complianceScore > 85) strengths.push('Compliance standards are strong. The store is well-controlled.');
+  if (metrics.loyaltyIndex > 75) strengths.push('Customer loyalty is building. Repeat visits and basket growth are evident.');
+  if (metrics.wastePct < 2.0) strengths.push('Waste is well managed. Minimal product loss.');
+  if (metrics.queueTimeMins < 3) strengths.push('Queue times are fast. Customers are getting through quickly.');
+  if (metrics.netProfit > 18000) strengths.push('Net profit is strong. The P&L is healthy.');
+  if (metrics.attritionRisk < 25) strengths.push('Attrition risk is low. Your team is stable.');
 
   // Always return at least 3
   if (strengths.length < 3) {
@@ -557,20 +568,20 @@ export function generateStrengths(metrics: Metrics): string[] {
 
 export function generateRisks(metrics: Metrics): string[] {
   const risks: string[] = [];
-  if (metrics.engagementScore < 55) risks.push('Team engagement is critically low — risk of resignations and poor service.');
-  if (metrics.attritionRisk > 55) risks.push('Attrition risk is high — you could lose key colleagues soon.');
-  if (metrics.complianceScore < 60) risks.push('Compliance is weak — the store is vulnerable to audit failures and incidents.');
-  if (metrics.customerSatisfaction < 60) risks.push('Customer satisfaction is poor — complaints are likely to escalate.');
-  if (metrics.wastePct > 4) risks.push('Waste levels are high — margin is being eroded by product loss.');
-  if (metrics.shrinkPct > 2.5) risks.push('Shrink is above target — investigate stock loss urgently.');
-  if (metrics.queueTimeMins > 6) risks.push('Queue times are unacceptable — customers are abandoning baskets.');
-  if (metrics.absenceRatePct > 6) risks.push('Absence is high — the store is frequently understaffed.');
-  if (metrics.availabilityPct < 88) risks.push('Availability is poor — customers can\'t find products on shelf.');
-  if (metrics.netProfit < 5000) risks.push('Profitability is under pressure — the P&L needs attention.');
+  if (metrics.engagementScore < 55) risks.push('Team engagement is critically low. Risk of resignations and poor service.');
+  if (metrics.attritionRisk > 55) risks.push('Attrition risk is high. You could lose key colleagues soon.');
+  if (metrics.complianceScore < 60) risks.push('Compliance is weak. The store is vulnerable to audit failures and incidents.');
+  if (metrics.customerSatisfaction < 60) risks.push('Customer satisfaction is poor. Complaints are likely to escalate.');
+  if (metrics.wastePct > 4) risks.push('Waste levels are high. Margin is being eroded by product loss.');
+  if (metrics.shrinkPct > 2.5) risks.push('Shrink is above target. Investigate stock loss urgently.');
+  if (metrics.queueTimeMins > 6) risks.push('Queue times are unacceptable. Customers are abandoning baskets.');
+  if (metrics.absenceRatePct > 6) risks.push('Absence is high. The store is frequently understaffed.');
+  if (metrics.availabilityPct < 88) risks.push('Availability is poor. Customers can\'t find products on shelf.');
+  if (metrics.netProfit < 5000) risks.push('Profitability is under pressure. The P&L needs attention.');
 
   if (risks.length < 3) {
     const defaults = [
-      'Monitor team workload — sustained pressure can erode performance.',
+      'Monitor team workload. Sustained pressure can erode performance.',
       'Keep an eye on local competitor activity.',
       'Ensure maintenance schedules are up to date to prevent breakdowns.',
     ];
@@ -588,11 +599,11 @@ export function generateRecommendations(metrics: Metrics): string[] {
   // Prioritise by worst areas
   const issues: { score: number; rec: string }[] = [
     { score: metrics.engagementScore, rec: 'Invest in colleague wellbeing and listen to your team. Engagement drives everything else.' },
-    { score: metrics.customerSatisfaction, rec: 'Focus on the customer experience — availability, service speed, and complaint resolution.' },
+    { score: metrics.customerSatisfaction, rec: 'Focus on the customer experience: availability, service speed, and complaint resolution.' },
     { score: metrics.complianceScore, rec: 'Dedicate time to compliance routines before they become a liability.' },
-    { score: 100 - metrics.wastePct * 15, rec: 'Tighten waste controls — better ordering, rotation, and markdown management.' },
-    { score: 100 - metrics.queueTimeMins * 10, rec: 'Improve checkout speed — deploy staff to tills during peak hours.' },
-    { score: 100 - metrics.attritionRisk, rec: 'Address retention risk — have honest conversations with your team about workload and development.' },
+    { score: 100 - metrics.wastePct * 15, rec: 'Tighten waste controls: better ordering, rotation, and markdown management.' },
+    { score: 100 - metrics.queueTimeMins * 10, rec: 'Improve checkout speed: deploy staff to tills during peak hours.' },
+    { score: 100 - metrics.attritionRisk, rec: 'Address retention risk: have honest conversations with your team about workload and development.' },
   ];
 
   issues.sort((a, b) => a.score - b.score);

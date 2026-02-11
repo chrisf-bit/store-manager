@@ -7,6 +7,7 @@ interface ScenarioPanelProps {
   onSelect: (scenarioId: string, optionIndex: number) => void;
   narrative?: string;
   roundNumber: number;
+  onAllComplete?: () => void;
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -22,6 +23,7 @@ export default function ScenarioPanel({
   onSelect,
   narrative,
   roundNumber,
+  onAllComplete,
 }: ScenarioPanelProps) {
   // Track which scenario we're viewing (stepped flow)
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,9 +47,17 @@ export default function ScenarioPanel({
     onSelect(scenario.id, pendingOption);
     setPendingOption(null);
 
-    // Auto-advance to next unconfirmed scenario after a brief pause
     if (currentIndex < scenarios.length - 1) {
+      // Auto-advance to next unconfirmed scenario after a brief pause
       setTimeout(() => setCurrentIndex(currentIndex + 1), 300);
+    } else {
+      // Last scenario confirmed — check if all are now done and auto-advance tab
+      const willBeAllDone = scenarios.every(
+        (s) => s.id === scenario.id || selections[s.id] !== undefined
+      );
+      if (willBeAllDone && onAllComplete) {
+        setTimeout(() => onAllComplete(), 500);
+      }
     }
   };
 
@@ -205,7 +215,7 @@ export default function ScenarioPanel({
       {allDone && (
         <div className="mt-5 p-4 bg-brand-600/10 border border-brand-600/20 rounded-lg text-center animate-fadeIn">
           <p className="text-sm text-brand-300">
-            All {scenarios.length} scenarios responded. Switch to the <strong>Decisions</strong> tab to make your operational choices.
+            All {scenarios.length} scenarios complete. Moving to decisions...
           </p>
         </div>
       )}

@@ -6,6 +6,7 @@ interface DecisionsProps {
   roundNumber: number;
   selections: Record<string, string>;
   onSelect: (templateId: string, optionKey: string) => void;
+  onAllComplete?: () => void;
 }
 
 const CATEGORY_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
@@ -24,20 +25,16 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: string; desc: strin
     icon: '⚙️',
     desc: 'Where will you direct your operations effort?',
   },
-  investment: {
-    label: 'Investment Priority',
-    icon: '📈',
-    desc: 'Where will you invest your limited budget this week?',
-  },
 };
 
-const CATEGORY_ORDER = ['commercial', 'labour', 'operations', 'investment'];
+const CATEGORY_ORDER = ['commercial', 'labour', 'operations'];
 
 export default function Decisions({
   templates,
   roundNumber,
   selections,
   onSelect,
+  onAllComplete,
 }: DecisionsProps) {
   const sortedTemplates = [...templates].sort(
     (a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
@@ -58,9 +55,17 @@ export default function Decisions({
     onSelect(template.id, pendingOption);
     setPendingOption(null);
 
-    // Auto-advance to next unconfirmed decision
     if (currentIndex < sortedTemplates.length - 1) {
+      // Auto-advance to next unconfirmed decision
       setTimeout(() => setCurrentIndex(currentIndex + 1), 300);
+    } else {
+      // Last decision confirmed — notify parent
+      const willBeAllDone = sortedTemplates.every(
+        (t) => t.id === template.id || selections[t.id]
+      );
+      if (willBeAllDone && onAllComplete) {
+        setTimeout(() => onAllComplete(), 500);
+      }
     }
   };
 

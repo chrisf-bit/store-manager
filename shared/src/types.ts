@@ -80,6 +80,7 @@ export interface SimulationRun {
 export interface RoundData {
   roundState: RoundState;
   decisions: DecisionTemplate[];
+  allocationTemplates?: AllocationTemplate[];
   scenarios?: Scenario[];
   previousDecisions?: DecisionSelection[];
   previousEvent?: EventInstance;
@@ -119,6 +120,28 @@ export interface Scenario {
 export interface ScenarioSelection {
   scenarioId: string;
   optionIndex: number;
+}
+
+export interface AllocationItem {
+  key: string;
+  label: string;
+  description: string;
+}
+
+export interface AllocationTemplate {
+  id: string;
+  category: 'budget' | 'time';
+  title: string;
+  description: string;
+  total: number;
+  unit: string;
+  step: number;
+  items: AllocationItem[];
+}
+
+export interface AllocationSelection {
+  allocationTemplateId: string;
+  allocations: Record<string, number>;
 }
 
 export interface EndReport {

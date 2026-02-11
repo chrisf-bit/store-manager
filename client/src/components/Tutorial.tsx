@@ -67,7 +67,7 @@ export function TutorialPrompt({
             Show Me Around
           </button>
           <button onClick={onSkip} className="btn-secondary">
-            Skip — I'll Figure It Out
+            Skip, I'll Figure It Out
           </button>
         </div>
       </div>

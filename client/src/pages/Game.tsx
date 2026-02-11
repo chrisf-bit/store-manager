@@ -4,6 +4,7 @@ import type {
   SimulationRun,
   RoundState,
   DecisionTemplate,
+  AllocationTemplate,
   RoundResult,
   Metrics,
   Scenario,
@@ -14,6 +15,7 @@ import { TutorialPrompt, TutorialOverlay, TUTORIAL_STEPS } from '../components/T
 import type { TutorialRefMap } from '../components/Tutorial';
 import ScenarioPanel from '../components/ScenarioPanel';
 import Decisions from '../components/Decisions';
+import AllocationPanel from '../components/AllocationPanel';
 import Results from '../components/Results';
 import EndSummary from '../components/EndSummary';
 import MetricCard from '../components/MetricCard';
@@ -21,7 +23,7 @@ import TrendCharts from '../components/TrendCharts';
 import MetricOverlay, { calcNotifications } from '../components/MetricOverlay';
 
 type GamePhase = 'intro' | 'active' | 'results' | 'end';
-type ActiveTab = 'scenarios' | 'decisions' | 'metrics' | 'charts' | 'results';
+type ActiveTab = 'scenarios' | 'decisions' | 'allocations' | 'metrics' | 'charts' | 'results';
 type GuidePhase = 'plan' | 'execute' | 'reflect';
 
 /* ---------- Metric definitions for the Metrics tab ---------- */
@@ -91,11 +93,13 @@ export default function Game() {
   const [currentMetrics, setCurrentMetrics] = useState<Metrics | null>(null);
   const [narrative, setNarrative] = useState('');
   const [decisionTemplates, setDecisionTemplates] = useState<DecisionTemplate[]>([]);
+  const [allocationTemplates, setAllocationTemplates] = useState<AllocationTemplate[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
 
   /* ---- Selection state ---- */
   const [decisionSelections, setDecisionSelections] = useState<Record<string, string>>({});
+  const [allocationSelections, setAllocationSelections] = useState<Record<string, Record<string, number>>>({});
   const [scenarioSelections, setScenarioSelections] = useState<Record<string, number>>({});
 
   /* ---- UI state ---- */
@@ -133,17 +137,20 @@ export default function Game() {
   const guidePhase: GuidePhase =
     phase === 'results'
       ? 'reflect'
-      : phase === 'active' && (activeTab === 'decisions' || activeTab === 'scenarios')
+      : phase === 'active' && (activeTab === 'decisions' || activeTab === 'scenarios' || activeTab === 'allocations')
         ? 'execute'
         : 'plan';
 
   const decisionCount = Object.keys(decisionSelections).length;
+  const allocationCount = Object.keys(allocationSelections).length;
   const scenarioCount = Object.keys(scenarioSelections).length;
   const allDecisionsSelected =
     decisionTemplates.length > 0 && decisionTemplates.every((t) => decisionSelections[t.id]);
+  const allAllocationsSet =
+    allocationTemplates.length === 0 || allocationTemplates.every((t) => allocationSelections[t.id]);
   const allScenariosSelected =
     scenarios.length === 0 || scenarios.every((s) => scenarioSelections[s.id] !== undefined);
-  const canSubmit = allDecisionsSelected && allScenariosSelected;
+  const canSubmit = allDecisionsSelected && allAllocationsSet && allScenariosSelected;
 
   /* ---- Load round data ---- */
   const loadRound = useCallback(
@@ -152,6 +159,7 @@ export default function Game() {
       try {
         const data = await api.getRound(runId, roundNumber);
         setDecisionTemplates(data.decisions);
+        setAllocationTemplates(data.allocationTemplates || []);
         setScenarios(data.scenarios || []);
         setCurrentMetrics(data.roundState.metrics);
         setNarrative(data.roundState.narrativeText);
@@ -201,6 +209,7 @@ export default function Game() {
   /* ---- Begin week (from intro phase) ---- */
   const handleBeginWeek = () => {
     setDecisionSelections({});
+    setAllocationSelections({});
     setScenarioSelections({});
     setActiveTab(scenarios.length > 0 ? 'scenarios' : 'decisions');
     setPhase('active');
@@ -243,6 +252,10 @@ export default function Game() {
         decisionTemplateId: t.id,
         optionKey: decisionSelections[t.id],
       }));
+      const allocations = allocationTemplates.map((t) => ({
+        allocationTemplateId: t.id,
+        allocations: allocationSelections[t.id] || {},
+      }));
       const scenarioSels = scenarios.map((s) => ({
         scenarioId: s.id,
         optionIndex: scenarioSelections[s.id],
@@ -250,6 +263,7 @@ export default function Game() {
 
       const result = await api.submitDecisions(runId, nextRound, {
         decisions,
+        allocations,
         scenarioSelections: scenarioSels.length > 0 ? scenarioSels : undefined,
       });
 
@@ -291,6 +305,7 @@ export default function Game() {
     } else {
       await loadRound(currentRound);
       setDecisionSelections({});
+      setAllocationSelections({});
       setScenarioSelections({});
       setActiveTab('scenarios');
       setPhase('active');
@@ -304,7 +319,7 @@ export default function Game() {
         { key: 'results', label: 'Results' },
         { key: 'metrics', label: 'Metrics' },
         ...(allRoundStates.length > 1
-          ? [{ key: 'charts' as ActiveTab, label: 'Charts' }]
+          ? [{ key: 'charts' as ActiveTab, label: 'Trends' }]
           : []),
       ];
     }
@@ -322,9 +337,16 @@ export default function Game() {
         label: 'Decisions',
         badge: `${decisionCount}/${decisionTemplates.length}`,
       });
+      if (allocationTemplates.length > 0) {
+        tabs.push({
+          key: 'allocations',
+          label: 'Allocations',
+          badge: `${allocationCount}/${allocationTemplates.length}`,
+        });
+      }
       tabs.push({ key: 'metrics', label: 'Metrics', pulse: true });
       if (allRoundStates.length > 1) {
-        tabs.push({ key: 'charts', label: 'Charts' });
+        tabs.push({ key: 'charts', label: 'Trends' });
       }
       return tabs;
     }
@@ -448,7 +470,7 @@ export default function Game() {
                             : 'upcoming'
                       }`}
                     >
-                      {r <= currentRound ? '\u2713' : `Q${r}`}
+                      {r <= currentRound ? '\u2713' : `W${r}`}
                     </div>
                     {i < 3 && (
                       <div
@@ -565,6 +587,7 @@ export default function Game() {
                 }
                 narrative={narrative}
                 roundNumber={currentRound + 1}
+                onAllComplete={() => setActiveTab('decisions')}
               />
             )}
 
@@ -577,6 +600,24 @@ export default function Game() {
                 onSelect={(id, key) =>
                   setDecisionSelections((prev) => ({ ...prev, [id]: key }))
                 }
+                onAllComplete={() =>
+                  allocationTemplates.length > 0
+                    ? setActiveTab('allocations')
+                    : handleSubmit()
+                }
+              />
+            )}
+
+            {/* ===== ACTIVE PHASE — Allocations tab ===== */}
+            {phase === 'active' && activeTab === 'allocations' && allocationTemplates.length > 0 && (
+              <AllocationPanel
+                templates={allocationTemplates}
+                roundNumber={currentRound + 1}
+                allocations={allocationSelections}
+                onAllocate={(id, allocs) =>
+                  setAllocationSelections((prev) => ({ ...prev, [id]: allocs }))
+                }
+                onAllComplete={() => handleSubmit()}
               />
             )}
 
@@ -668,6 +709,15 @@ export default function Game() {
                 <strong className="text-text-primary">
                   {decisionCount}/{decisionTemplates.length}
                 </strong>
+                {allocationTemplates.length > 0 && (
+                  <>
+                    {' \u00B7 '}
+                    Allocations:{' '}
+                    <strong className="text-text-primary">
+                      {allocationCount}/{allocationTemplates.length}
+                    </strong>
+                  </>
+                )}
               </div>
               <button
                 onClick={handleSubmit}

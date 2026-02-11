@@ -38,6 +38,17 @@ export interface DecisionSelectionRecord {
   optionKey: string;
 }
 
+export interface AllocationTemplateRecord {
+  id: string;
+  category: 'budget' | 'time';
+  title: string;
+  description: string;
+  total: number;
+  unit: string;
+  step: number;
+  itemsJson: { key: string; label: string; description: string }[];
+}
+
 export interface EventTemplateRecord {
   id: string;
   category: string;
@@ -61,6 +72,7 @@ const roundStates = new Map<string, RoundStateRecord[]>(); // runId -> states
 const decisionSelections = new Map<string, DecisionSelectionRecord[]>(); // runId -> selections
 const eventInstances = new Map<string, EventInstanceRecord[]>(); // runId -> instances
 const decisionTemplates: DecisionTemplateRecord[] = [];
+const allocationTemplates: AllocationTemplateRecord[] = [];
 const eventTemplates: EventTemplateRecord[] = [];
 
 // --- Seed data ---
@@ -73,7 +85,7 @@ function seed() {
       category: 'commercial',
       title: 'Pricing & Promotions Strategy',
       optionsJson: [
-        { key: 'protect_margin', label: 'Protect Margin', description: 'Hold prices firm — protect gross margin at the expense of footfall. Fewer promotions, premium positioning.' },
+        { key: 'protect_margin', label: 'Protect Margin', description: 'Hold prices firm to protect gross margin at the expense of footfall. Fewer promotions, premium positioning.' },
         { key: 'balanced', label: 'Balanced Approach', description: 'Moderate promotions. Steady footfall with reasonable margin. A safe middle-ground.' },
         { key: 'drive_volume', label: 'Drive Volume', description: 'Increase promotional activity to boost footfall. Margin will dip but basket count rises. More pressure on store operations.' },
         { key: 'aggressive_competitor', label: 'Aggressive vs Competitor', description: 'Undercut the local competitor hard. Big footfall surge, significant margin hit, and heavy workload on the team.' },
@@ -85,7 +97,7 @@ function seed() {
       title: 'Labour & Staffing Plan',
       optionsJson: [
         { key: 'cut_hours', label: 'Cut Hours', description: 'Reduce colleague hours to save costs. Savings hit the bottom line but service, availability, and morale will suffer.' },
-        { key: 'hold_hours', label: 'Hold Hours', description: 'Maintain current staffing levels. No change in cost or capacity — stability but no improvement.' },
+        { key: 'hold_hours', label: 'Hold Hours', description: 'Maintain current staffing levels. No change in cost or capacity. Stability but no improvement.' },
         { key: 'add_hours', label: 'Add Hours', description: 'Invest in additional contracted hours. Better availability and service, but labour cost rises.' },
         { key: 'add_overtime', label: 'Add Overtime', description: 'Use overtime to cover gaps. Quick fix for capacity, but expensive and can fatigue the team if sustained.' },
       ],
@@ -101,15 +113,38 @@ function seed() {
         { key: 'compliance', label: 'Compliance & Standards', description: 'Focus on health & safety, food hygiene, and operational standards. Reduces risk but takes time from trading.' },
       ],
     },
+  );
+
+  // Allocation templates
+  allocationTemplates.push(
     {
       id: uuid(),
-      category: 'investment',
-      title: 'Investment Priority',
-      optionsJson: [
-        { key: 'equipment', label: 'Equipment Maintenance', description: 'Invest in fixing and maintaining store equipment — fridges, ovens, tills. Reduces breakdown risk and waste.' },
-        { key: 'wellbeing', label: 'Colleague Wellbeing', description: 'Invest in colleague wellbeing — rest areas, mental health support, team events. Boosts engagement and retention.' },
-        { key: 'marketing', label: 'Local Marketing', description: 'Invest in local marketing — leaflets, community events, social media. Drives footfall from the local area.' },
-        { key: 'training', label: 'Capability & Training', description: 'Invest in colleague training — product knowledge, customer service skills, compliance refreshers.' },
+      category: 'budget',
+      title: 'Weekly Budget',
+      description: 'Allocate your £5,000 weekly discretionary budget across four investment areas.',
+      total: 5000,
+      unit: '£',
+      step: 500,
+      itemsJson: [
+        { key: 'equipment', label: 'Equipment', description: 'Fridges, ovens, tills, fixtures. Reduces breakdowns and waste.' },
+        { key: 'wellbeing', label: 'Wellbeing', description: 'Rest areas, mental health support, team events. Boosts engagement.' },
+        { key: 'marketing', label: 'Marketing', description: 'Leaflets, social media, community events. Drives local footfall.' },
+        { key: 'training', label: 'Training', description: 'Product knowledge, customer service, compliance refreshers.' },
+      ],
+    },
+    {
+      id: uuid(),
+      category: 'time',
+      title: 'Management Time',
+      description: 'Allocate your 40 management hours across four focus areas this week.',
+      total: 40,
+      unit: 'hrs',
+      step: 4,
+      itemsJson: [
+        { key: 'floor_coaching', label: 'Floor Coaching', description: 'Walking the shop floor, coaching colleagues, spotting issues in real time.' },
+        { key: 'team_meetings', label: 'Team Meetings', description: 'Briefings, one-to-ones, performance reviews. Builds engagement and alignment.' },
+        { key: 'admin', label: 'Admin & Planning', description: 'Rotas, ordering, compliance paperwork, reporting. Keeps the operation tight.' },
+        { key: 'customer_focus', label: 'Customer Focus', description: 'Greeting customers, handling complaints, building local relationships.' },
       ],
     }
   );
@@ -209,6 +244,15 @@ export const store = {
     const arr = decisionSelections.get(runId) || [];
     if (roundNumber !== undefined) return arr.filter((d) => d.roundNumber === roundNumber);
     return arr;
+  },
+
+  // Allocation templates
+  getAllocationTemplates(): AllocationTemplateRecord[] {
+    return allocationTemplates;
+  },
+
+  getAllocationTemplate(id: string): AllocationTemplateRecord | undefined {
+    return allocationTemplates.find((at) => at.id === id);
   },
 
   // Event templates
