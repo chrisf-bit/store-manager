@@ -1,4 +1,4 @@
-import { type RefObject, type ComponentType } from 'react';
+import { type RefObject, type ComponentType, useState, useEffect, useCallback } from 'react';
 import { Compass, Store, LayoutList, Target, Send } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
@@ -77,7 +77,7 @@ export function TutorialPrompt({
   );
 }
 
-/* ========== Full-Card Tutorial Overlay ========== */
+/* ========== Tutorial Overlay ========== */
 export type TutorialRefMap = Record<string, RefObject<HTMLElement | null>>;
 
 interface TutorialOverlayProps {
@@ -88,32 +88,59 @@ interface TutorialOverlayProps {
   onSkip: () => void;
 }
 
+interface PinnedPos {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+const DESKTOP_BREAKPOINT = 768;
+
 export function TutorialOverlay({
   step,
+  refMap,
   onNext,
   onPrev,
   onSkip,
 }: TutorialOverlayProps) {
   const currentStep = TUTORIAL_STEPS[step];
   const isLast = step === TUTORIAL_STEPS.length - 1;
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= DESKTOP_BREAKPOINT);
+  const [targetRect, setTargetRect] = useState<PinnedPos | null>(null);
 
-  return (
-    <div className="tutorial-card-overlay">
-      {/* Step indicator */}
+  const measure = useCallback(() => {
+    const wide = window.innerWidth >= DESKTOP_BREAKPOINT;
+    setIsDesktop(wide);
+    if (wide) {
+      const ref = refMap[currentStep.id];
+      const el = ref?.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+      } else {
+        setTargetRect(null);
+      }
+    }
+  }, [refMap, currentStep.id]);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure]);
+
+  const Icon = currentStep.icon;
+
+  /* ---- Shared card content ---- */
+  const cardContent = (
+    <>
       <div className="tutorial-step-counter">
         {step + 1} of {TUTORIAL_STEPS.length}
       </div>
-
-      {/* Icon */}
-      <div className="tutorial-icon"><currentStep.icon size={48} strokeWidth={1.5} /></div>
-
-      {/* Title */}
+      <div className="tutorial-icon"><Icon size={isDesktop ? 32 : 48} strokeWidth={1.5} /></div>
       <h3 className="tutorial-title">{currentStep.title}</h3>
-
-      {/* Description */}
       <p className="tutorial-description">{currentStep.description}</p>
-
-      {/* Progress dots */}
       <div className="tutorial-dots">
         {TUTORIAL_STEPS.map((_, i) => (
           <div
@@ -122,22 +149,70 @@ export function TutorialOverlay({
           />
         ))}
       </div>
-
-      {/* Navigation */}
       <div className="tutorial-nav">
-        <button onClick={onSkip} className="tutorial-skip-btn">
-          Skip tour
-        </button>
+        <button onClick={onSkip} className="tutorial-skip-btn">Skip tour</button>
         <div className="flex gap-3">
           {step > 0 && (
-            <button onClick={onPrev} className="btn-secondary text-sm">
-              Back
-            </button>
+            <button onClick={onPrev} className="btn-secondary text-sm">Back</button>
           )}
           <button onClick={onNext} className="btn-primary text-sm px-6">
             {isLast ? 'Got it!' : 'Next'}
           </button>
         </div>
+      </div>
+    </>
+  );
+
+  /* ---- Mobile: full-screen card ---- */
+  if (!isDesktop) {
+    return <div className="tutorial-card-overlay">{cardContent}</div>;
+  }
+
+  /* ---- Desktop: pinned tile next to highlighted element ---- */
+  const CARD_W = 360;
+  const CARD_GAP = 16;
+
+  // Position card to the right of the target, or below if not enough space
+  let cardStyle: React.CSSProperties = {};
+  if (targetRect) {
+    const spaceRight = window.innerWidth - (targetRect.left + targetRect.width + CARD_GAP + CARD_W);
+    if (spaceRight >= 0) {
+      // Place to the right, vertically centred
+      cardStyle = {
+        position: 'fixed',
+        top: Math.max(16, targetRect.top + targetRect.height / 2 - 140),
+        left: targetRect.left + targetRect.width + CARD_GAP,
+        width: CARD_W,
+      };
+    } else {
+      // Place below, horizontally centred on target
+      cardStyle = {
+        position: 'fixed',
+        top: targetRect.top + targetRect.height + CARD_GAP,
+        left: Math.max(16, Math.min(targetRect.left, window.innerWidth - CARD_W - 16)),
+        width: CARD_W,
+      };
+    }
+  }
+
+  return (
+    <div className="tutorial-pinned-backdrop">
+      {/* Highlight ring on the target element */}
+      {targetRect && (
+        <div
+          className="tutorial-highlight"
+          style={{
+            top: targetRect.top - 4,
+            left: targetRect.left - 4,
+            width: targetRect.width + 8,
+            height: targetRect.height + 8,
+          }}
+        />
+      )}
+
+      {/* Pinned card */}
+      <div className="tutorial-pinned-card" style={cardStyle}>
+        {cardContent}
       </div>
     </div>
   );
