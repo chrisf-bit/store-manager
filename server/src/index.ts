@@ -20,63 +20,33 @@ try {
 const app = express();
 const port = process.env.PORT || 3001;
 
-// CORS
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
-  .split(',')
-  .map((s) => s.trim());
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-  })
-);
-
-app.use(express.json());
-
 // Request logging
 app.use((req, _res, next) => {
   logger.info({ method: req.method, url: req.url }, 'request');
   next();
 });
 
-// API routes — mounted under /api so the client can reach them via /api/*
-app.use('/api', router);
+// CORS — only needed for API routes (static files are same-origin)
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim());
+
+const corsMiddleware = cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+});
+
+// API routes — mounted under /api with CORS
+app.use('/api', corsMiddleware, express.json(), router);
 
 // Health check + debug info
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
-});
-
-app.get('/debug/paths', (_req, res) => {
-  const candidates = [
-    path.join(__dirname, '../../client/dist'),
-    path.join(__dirname, '../../../client/dist'),
-    path.join(process.cwd(), 'client/dist'),
-    path.join(process.cwd(), '../client/dist'),
-  ];
-  const info = {
-    __dirname,
-    cwd: process.cwd(),
-    resolvedClientDist: clientDist,
-    clientDistExists: fs.existsSync(clientDist),
-    indexHtmlExists: fs.existsSync(path.join(clientDist, 'index.html')),
-    assetsDir: fs.existsSync(path.join(clientDist, 'assets')),
-    assetFiles: fs.existsSync(path.join(clientDist, 'assets'))
-      ? fs.readdirSync(path.join(clientDist, 'assets'))
-      : [],
-    candidates: candidates.map((c) => ({
-      raw: c,
-      resolved: path.resolve(c),
-      exists: fs.existsSync(path.resolve(c)),
-    })),
-  };
-  res.json(info);
 });
 
 // Resolve client dist path — try multiple strategies for different environments
